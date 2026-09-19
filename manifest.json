@@ -1,0 +1,15 @@
+{
+  "name": "Control de Producción QR",
+  "short_name": "ProdQR",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f4f4f9",
+  "theme_color": "#007bff",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/714/714390.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
