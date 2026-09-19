@@ -3,68 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Producción QR</title>
+    <title>Módulo de Despacho - CM Estructuras</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
+    <meta name="theme-color" content="#023e8a">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 0; color: #333; }
         
-        /* Barra de Menú Superior */
-        nav { background: #007bff; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        nav h2 { margin: 0; font-size: 1.2rem; }
-        #install-btn { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; display: none; cursor: pointer; }
+        /* Barra Superior */
+        nav { background: #023e8a; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        nav h2 { margin: 0; font-size: 1.1rem; }
+        #install-btn { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; display: none; cursor: pointer; font-size: 0.9rem; }
 
-        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
-        #reader { width: 100%; max-width: 400px; margin: 15px auto; border-radius: 10px; overflow: hidden; border: 2px solid #ddd; background: #000; }
-        #result { margin-top: 15px; font-size: 1.1rem; font-weight: bold; color: #007bff; word-break: break-all; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        
+        /* Formulario de Metadatos */
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        label { font-size: 0.85rem; font-weight: bold; color: #555; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+        
+        /* Escáner */
+        #reader { width: 100%; max-width: 350px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; border: 2px solid #023e8a; background: #000; }
+        
+        /* Tabla de Despacho */
+        .table-container { overflow-x: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; border-radius: 6px; overflow: hidden; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #334155; color: white; }
+        .btn-eliminar { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        
+        /* Botones de Acción */
+        .actions { display: flex; gap: 10px; margin-bottom: 30px; }
+        .btn { flex: 1; padding: 12px; font-size: 1rem; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
+        .btn-enviar { background: #023e8a; }
+        .btn-pdf { background: #28a745; }
+
+        /* Estilo exclusivo para cuando se imprima o guarde como PDF */
+        @media print {
+            body { background: white; padding: 0; }
+            nav, #reader, .actions, .card input, .card select, .btn-eliminar, #install-btn { display: none !important; }
+            .container { max-width: 100%; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+            table { border: 1px solid #333; }
+            th, td { border: 1px solid #333; color: black; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- MENÚ SUPERIOR -->
     <nav>
-        <h2>📊 ProdQR</h2>
+        <h2>🚛 Despacho CM</h2>
         <button id="install-btn">Instalar App</button>
     </nav>
 
     <div class="container">
-        <h3>Escáner de Planta</h3>
-        <div id="reader"></div>
-        <div id="result">Apunta la cámara a un código QR...</div>
+        
+        <!-- DATOS DEL DESPACHO -->
+        <div class="card">
+            <label>Obra / Proyecto:</label>
+            <input type="text" id="obra" placeholder="Ej: A263 - Torre Central">
+            
+            <label>Transportador / Conductor:</label>
+            <input type="text" id="transportador" placeholder="Nombre de la empresa o conductor">
+            
+            <label>Quién realiza el despacho (Responsable):</label>
+            <input type="text" id="responsable" placeholder="Tu nombre completo">
+        </div>
+
+        <!-- CÁMARA ESCÁNER QR -->
+        <div class="card" style="text-align: center;">
+            <label style="margin-bottom: 10px;">Escanea el código QR de la pieza:</label>
+            <div id="reader"></div>
+            <p id="status-scan" style="font-size: 0.9rem; color: #023e8a; font-weight: bold; margin: 0;">Cámara lista para escanear...</p>
+        </div>
+
+        <!-- LISTA / TABLA DE DESPACHO -->
+        <div class="card">
+            <h3 style="margin-top: 0; font-size: 1rem; color: #023e8a;">Elementos en la Lista de Despacho</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ID / Elemento QR</th>
+                            <th>Fecha / Hora</th>
+                            <th>Acción</th>
+                        </tr>
+                    ​</thead>
+                    <tbody id="lista-despacho-body">
+                        <tr><td colspan="4" style="text-align: center; color: #888;">No hay elementos escaneados aún.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BOTONES FINALES -->
+        <div class="actions">
+            <button class="btn btn-pdf" onclick="imprimirPDF()">🖨️ Imprimir / PDF</button>
+            <button class="btn btn-enviar" onclick="enviarDespachoServidor()">📤 Registrar en Script</button>
+        </div>
+
     </div>
 
-    <!-- Script de la librería de QR -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="app.js"></script>
-
-    <!-- Script para habilitar la instalación como PWA -->
+    
     <script>
+        // PWA Install prompt
         let deferredPrompt;
         const installBtn = document.getElementById('install-btn');
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             installBtn.style.display = 'block';
-
             installBtn.addEventListener('click', () => {
                 installBtn.style.display = 'none';
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('Usuario aceptó instalar la PWA');
-                    }
-                    deferredPrompt = null;
-                });
+                deferredPrompt.userChoice.then((choiceResult) => { deferredPrompt = null; });
             });
         });
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('manifest.json')
-                .then(() => console.log("Service Worker registrado con éxito."))
-                .catch((err) => console.log("Error en Service Worker:", err));
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }
     </script>
 </body>
 </html>
