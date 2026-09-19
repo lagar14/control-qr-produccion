@@ -116,7 +116,7 @@ function enviarDespachoServidor() {
     }
 
     // ⚠️ REEMPLAZA ESTA URL CON TU URL REAL DE GOOGLE APPS SCRIPT QUE TERMINA EN /exec
-    const urlAPI = "https://script.google.com/macros/s/TU_URL_DE_APPS_SCRIPT/exec";
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec";
 
     document.getElementById('status-scan').innerText = "📤 Enviando lote al servidor...";
 
