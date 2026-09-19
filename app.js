@@ -30,7 +30,7 @@ let html5QrcodeScanner = new Html5QrcodeScanner(
 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 function enviarReporteAlServidor(codigoQR) {
-    const urlAPI = "https://script.google.com/macros/s/TU_URL_DE_APPS_SCRIPT/exec";
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec";
     
     fetch(urlAPI, {
         method: "POST",
