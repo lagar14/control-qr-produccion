@@ -2,35 +2,51 @@ let itemsDespacho = [];
 
 // Función que se ejecuta al escanear exitosamente un QR
 function onScanSuccess(decodedText, decodedResult) {
-    // Evitar lecturas duplicadas continuas en el mismo segundo
-    const idLimpio = decodedText.trim();
-    
-    // Verificar si ya está en la lista actual para evitar duplicados accidentales
+    let idLimpio = decodedText.trim();
+
+    // Limpiamos el texto por si el QR contiene un enlace web completo (ej: ?id=PL7)
+    if (idLimpio.includes("?id=")) {
+        const partes = idLimpio.split("?id=");
+        idLimpio = partes[1].split("&")[0];
+    } else if (idLimpio.startsWith("http")) {
+        try {
+            const urlObj = new URL(idLimpio);
+            const pathSegments = urlObj.pathname.split('/');
+            idLimpio = pathSegments[pathSegments.length - 1] || idLimpio;
+        } catch (e) {
+            // Si falla el análisis de URL, mantenemos el texto original limpio
+        }
+    }
+
+    // Evitar duplicados accidentales en la misma lista de despacho
     if (itemsDespacho.some(item => item.id === idLimpio)) {
-        document.getElementById('status-scan').innerText = `⚠️ El código ${idLimpio} ya está en la lista.`;
+        document.getElementById('status-scan').innerText = `⚠️ El elemento ${idLimpio} ya está en la lista.`;
         return;
     }
 
-    if (navigator.vibrate) { navigator.vibrate(200); }
+    // Vibración de confirmación en el dispositivo móvil
+    if (navigator.vibrate) { 
+        navigator.vibrate(200); 
+    }
 
     const ahora = new Date();
     const fechaHoraFormateada = ahora.toLocaleDateString() + ' ' + ahora.toLocaleTimeString();
 
-    // Agregar a nuestro arreglo local
+    // Añadir el elemento al arreglo local de despacho
     itemsDespacho.push({
-        id: idLimpio,
+        id: decodeURIComponent(idLimpio),
         fecha: fechaHoraFormateada
     });
 
-    document.getElementById('status-scan').innerText = `✅ ¡Agregado: ${idLimpio}!`;
+    document.getElementById('status-scan').innerText = `✅ ¡Agregado correctamente: ${idLimpio}!`;
     actualizarTablaDespacho();
 }
 
 function onScanFailure(error) {
-    // Ignorar errores menores de escaneo por cuadro
+    // Se ignoran los errores de fotogramas sin QR para mantener la cámara fluida
 }
 
-// Inicializar el escáner de cámara trasera
+// Inicialización del escáner con la cámara del dispositivo
 let html5QrcodeScanner = new Html5QrcodeScanner(
     "reader",
     { 
@@ -44,7 +60,7 @@ let html5QrcodeScanner = new Html5QrcodeScanner(
 
 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
-// Actualizar la tabla visual en pantalla
+// Actualiza la tabla visual en la interfaz web
 function actualizarTablaDespacho() {
     const tbody = document.getElementById('lista-despacho-body');
     
@@ -67,14 +83,14 @@ function actualizarTablaDespacho() {
     tbody.innerHTML = html;
 }
 
-// Función para eliminar un elemento si se equivocaron
+// Permite eliminar un elemento de la lista si se escaneó por error
 function eliminarItem(index) {
     itemsDespacho.splice(index, 1);
     actualizarTablaDespacho();
     document.getElementById('status-scan').innerText = "🗑️ Elemento eliminado de la lista.";
 }
 
-// Función para Imprimir o Guardar como PDF
+// Función para imprimir o generar el formato PDF para el transportador
 function imprimirPDF() {
     if (itemsDespacho.length === 0) {
         alert("No hay elementos en la lista para imprimir o guardar.");
@@ -83,27 +99,27 @@ function imprimirPDF() {
     window.print();
 }
 
-// Enviar los datos consolidados al Apps Script
+// Envía el lote completo de despacho hacia Google Apps Script / Google Sheets
 function enviarDespachoServidor() {
     const obra = document.getElementById('obra').value.trim();
     const transportador = document.getElementById('transportador').value.trim();
     const responsable = document.getElementById('responsable').value.trim();
 
     if (!obra || !transportador || !responsable) {
-        alert("Por favor completa los datos de Obra, Transportador y Responsable antes de registrar.");
+        alert("Por favor completa los campos de Obra, Transportador y Responsable antes de registrar.");
         return;
     }
 
     if (itemsDespacho.length === 0) {
-        alert("La lista de despacho está vacía.");
+        alert("La lista de despacho está vacía. Escanea al menos un código QR.");
         return;
     }
 
-    const urlAPI = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec"; // Reemplaza con tu URL real de Apps Script
+    // ⚠️ REEMPLAZA ESTA URL CON TU URL REAL DE GOOGLE APPS SCRIPT QUE TERMINA EN /exec
+    const urlAPI = "https://script.google.com/macros/s/TU_URL_DE_APPS_SCRIPT/exec";
 
-    document.getElementById('status-scan').innerText = "📤 Enviando datos al servidor...";
+    document.getElementById('status-scan').innerText = "📤 Enviando lote al servidor...";
 
-    // Estructuramos el paquete de datos para tu Apps Script
     const payload = {
         accion: "registrar_despacho_lote",
         obra: obra,
@@ -124,7 +140,7 @@ function enviarDespachoServidor() {
         actualizarTablaDespacho();
         document.getElementById('status-scan').innerText = "Cámara lista para escanear...";
     }).catch(error => {
-        console.error("Error:", error);
-        alert("Hubo un problema al enviar los datos.");
+        console.error("Error al enviar:", error);
+        alert("Hubo un problema al conectar con el servidor.");
     });
 }
