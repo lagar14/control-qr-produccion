@@ -1,24 +1,35 @@
 function onScanSuccess(decodedText, decodedResult) {
-    document.getElementById('result').innerText = `Registrado: ${decodedText}`;
+    document.getElementById('result').innerText = `¡Registrado!: ${decodedText}`;
+    
+    // Opcional: vibración corta al escanear con éxito (si el celular lo soporta)
+    if (navigator.vibrate) { navigator.vibrate(200); }
+    
     enviarReporteAlServidor(decodedText);
 }
 
 const html5QrCode = new Html5Qrcode("reader");
+
+// Configuración adaptada para mejor lectura en móviles
+const config = { 
+    fps: 15, 
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
+        // Hace que el cuadro de lectura sea responsivo al tamaño de la pantalla
+        let minSize = Math.min(viewfinderWidth, viewfinderHeight);
+        let size = Math.floor(minSize * 0.7);
+        return { width: size, height: size };
+    }
+};
+
 html5QrCode.start(
     { facingMode: "environment" }, 
-    {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-    },
+    config,
     onScanSuccess
 ).catch(err => {
     console.error("Error al iniciar la cámara:", err);
-    alert("No se pudo acceder a la cámara. Asegúrate de dar permisos.");
+    document.getElementById('result').innerText = "Error: No se pudo acceder a la cámara trasera.";
 });
 
 function enviarReporteAlServidor(codigoQR) {
-    // AQUÍ ES DONDE CONECTAS TU APPS SCRIPT:
-    // Reemplaza la URL de abajo con la URL de implementación web de tu Google Apps Script
     const urlAPI = "https://script.google.com/macros/s/TU_URL_DE_APPS_SCRIPT/exec";
     
     fetch(urlAPI, {
