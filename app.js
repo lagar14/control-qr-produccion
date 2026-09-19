@@ -99,7 +99,7 @@ function enviarDespachoServidor() {
         return;
     }
 
-    const urlAPI = "https://script.google.com/macros/s/TU_URL_DE_APPS_SCRIPT/exec"; // Reemplaza con tu URL real de Apps Script
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec"; // Reemplaza con tu URL real de Apps Script
 
     document.getElementById('status-scan').innerText = "📤 Enviando datos al servidor...";
 
