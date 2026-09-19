@@ -3,9 +3,31 @@ let itemTemporalScaneado = null; // Almacena temporalmente los datos de la consu
 
 const URL_API = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec";
 
+// ==========================================
+// VARIABLES DE CONTROL CONTRA RÁFAGAS DE LA CÁMARA
+// ==========================================
+let ultimoCodigoEscaneado = "";
+let tiempoUltimoEscaneo = 0;
+const TIEMPO_ESPERA = 3000; // 3 segundos de bloqueo para el mismo código
+let estaProcesandoEscaneo = false;
+
 // Escaneo exitoso del QR
 function onScanSuccess(decodedText, decodedResult) {
+    const ahora = Date.now();
     let idLimpio = decodedText.trim();
+
+    // 1. Control contra ráfagas (si ya hay una consulta activa, se ignora)
+    if (estaProcesandoEscaneo) return;
+
+    // 2. Control si es el mismo código y no han pasado 3 segundos
+    if (idLimpio === ultimoCodigoEscaneado && (ahora - tiempoUltimoEscaneo) < TIEMPO_ESPERA) {
+        return; 
+    }
+
+    // Activamos el bloqueo y actualizamos el registro del último escaneo
+    ultimoCodigoEscaneado = idLimpio;
+    tiempoUltimoEscaneo = ahora;
+    estaProcesandoEscaneo = true;
 
     // Limpiar enlace si viene en formato URL
     if (idLimpio.includes("?id=")) {
@@ -28,7 +50,7 @@ function onScanSuccess(decodedText, decodedResult) {
             if (data.success) {
                 if (data.disponible <= 0) {
                     alert(`⚠️ El elemento "${data.nombre}" ya ha completado el 100% de su despacho requerido.`);
-                    document.getElementById('status-scan').innerText = "Cámara lista para escanear...";
+                    liberarBloqueoCamara();
                     return;
                 }
 
@@ -52,14 +74,22 @@ function onScanSuccess(decodedText, decodedResult) {
                 document.getElementById('status-scan').innerText = "Esperando confirmación...";
             } else {
                 alert("❌ " + data.message);
-                document.getElementById('status-scan').innerText = "Cámara lista para escanear...";
+                liberarBloqueoCamara();
             }
         })
         .catch(err => {
             console.error(err);
             alert("Error de conexión al consultar el elemento.");
-            document.getElementById('status-scan').innerText = "Cámara lista para escanear...";
+            liberarBloqueoCamara();
         });
+}
+
+function liberarBloqueoCamara() {
+    // Liberamos el bloqueo después de 2 segundos para permitir escanear otros elementos
+    setTimeout(() => {
+        estaProcesandoEscaneo = false;
+        document.getElementById('status-scan').innerText = "Cámara lista para escanear...";
+    }, 2000);
 }
 
 function onScanFailure(error) {}
@@ -74,7 +104,7 @@ html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 function cerrarModal() {
     document.getElementById('modal-confirmacion').style.display = 'none';
     itemTemporalScaneado = null;
-    document.getElementById('status-scan').innerText = "Cámara lista para escanear...";
+    liberarBloqueoCamara();
 }
 
 // Confirmar la adición a la tabla local
@@ -188,5 +218,6 @@ function enviarDespachoServidor() {
     }).catch(error => {
         console.error(error);
         alert("Error al enviar el despacho.");
+        liberarBloqueoCamara();
     });
 }
