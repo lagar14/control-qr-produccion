@@ -5,16 +5,24 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-    // Ignoramos los errores de fotogramas donde no se ve el QR para no saturar la consola
+    // Ignoramos errores para no saturar
 }
 
-// Inicialización directa buscando la cámara trasera principal
+// === CONFIGURACIÓN MÁS FLEXIBLE PARA CÁMARAS INDUSTRIALES ===
 let html5QrcodeScanner = new Html5QrcodeScanner(
     "reader",
     { 
         fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
+        // AQUÍ ESTÁ EL CAMBIO CLAVE:
+        // Reducimos el cuadro guía a 150x150 pixeles para que sea más fácil
+        // que el QR entre sin tener que pegar el celular a la etiqueta.
+        qrbox: { width: 150, height: 150 },
+        // Mantenemos la relación de aspecto cuadrada para el video
+        aspectRatio: 1.0,
+        // Permitimos que la cámara haga zoom si el dispositivo lo soporta 
+        // (esto ayuda mucho si el código está un poco lejos)
+        rememberLastUsedCamera: true,
+        showTorchButtonIfSupported: true // Agrega botón de luz si hay flash
     },
     /* verbose= */ false
 );
