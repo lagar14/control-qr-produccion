@@ -118,6 +118,56 @@
     </div>
 
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        // ==========================================
+        // VARIABLES DE CONTROL CONTRA RÁFAGAS
+        // ==========================================
+        let ultimoCodigoEscaneado = "";
+        let tiempoUltimoEscaneo = 0;
+        const TIEMPO_ESPERA = 3000; // 3 segundos de bloqueo para el mismo código
+        let estaProcesandoEscaneo = false;
+
+        // Función envoltorio para proteger tu lógica original de `onScanSuccess` (definida en app.js)
+        function onScanSuccessProtegido(decodedText, decodedResult) {
+            const ahora = Date.now();
+            
+            if (estaProcesandoEscaneo) return;
+            if (decodedText === ultimoCodigoEscaneado && (ahora - tiempoUltimoEscaneo) < TIEMPO_ESPERA) {
+                return; 
+            }
+
+            ultimoCodigoEscaneado = decodedText;
+            tiempoUltimoEscaneo = ahora;
+            estaProcesandoEscaneo = true;
+
+            document.getElementById("status-scan").innerText = "Procesando código...";
+
+            // Llamamos a la función original que tengas en tu app.js (ej: onScanSuccess)
+            if (typeof onScanSuccess === "function") {
+                onScanSuccess(decodedText, decodedResult);
+            }
+
+            // Liberamos el bloqueo de ráfaga tras 2 segundos para el siguiente escaneo
+            setTimeout(() => {
+                estaProcesandoEscaneo = false;
+                document.getElementById("status-scan").innerText = "Cámara lista para escanear...";
+            }, 2000);
+        }
+
+        // Inicialización segura del lector de códigos con la protección activa
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof Html5QrcodeScanner !== "undefined") {
+                let html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader", 
+                    { fps: 10, qrbox: { width: 250, height: 250 } }, 
+                    false
+                );
+                html5QrcodeScanner.render(onScanSuccessProtegido, (error) => {
+                    // Errores de escaneo continuo ignorados a propósito
+                });
+            }
+        });
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
