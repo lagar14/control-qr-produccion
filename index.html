@@ -10,35 +10,34 @@
         * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 0; color: #333; }
         
-        /* Barra Superior */
         nav { background: #023e8a; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         nav h2 { margin: 0; font-size: 1.1rem; }
         #install-btn { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; display: none; cursor: pointer; font-size: 0.9rem; }
 
         .container { padding: 15px; max-width: 600px; margin: 0 auto; }
-        
-        /* Formulario de Metadatos */
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
         label { font-size: 0.85rem; font-weight: bold; color: #555; display: block; margin-bottom: 4px; text-transform: uppercase; }
         input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
         
-        /* Escáner */
         #reader { width: 100%; max-width: 350px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; border: 2px solid #023e8a; background: #000; }
         
-        /* Tabla de Despacho */
         .table-container { overflow-x: auto; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; border-radius: 6px; overflow: hidden; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #334155; color: white; }
         .btn-eliminar { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
         
-        /* Botones de Acción */
         .actions { display: flex; gap: 10px; margin-bottom: 30px; }
         .btn { flex: 1; padding: 12px; font-size: 1rem; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
         .btn-enviar { background: #023e8a; }
         .btn-pdf { background: #28a745; }
 
-        /* Estilo exclusivo para cuando se imprima o guarde como PDF */
+        /* Estilos del Modal de Confirmación */
+        #modal-confirmacion { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 380px; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; }
+        .modal-content h3 { color: #023e8a; margin-top: 0; }
+        .modal-info { font-size: 1rem; margin: 10px 0; color: #444; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 6px; }
+
         @media print {
             body { background: white; padding: 0; }
             nav, #reader, .actions, .card input, .card select, .btn-eliminar, #install-btn { display: none !important; }
@@ -56,9 +55,24 @@
         <button id="install-btn">Instalar App</button>
     </nav>
 
+    <!-- MODAL DE CONFIRMACIÓN AL ESCANEAR -->
+    <div id="modal-confirmacion">
+        <div class="modal-content">
+            <h3>Confirmar Elemento</h3>
+            <div class="modal-info" id="modal-detalle-texto">
+                <!-- Se llena dinámicamente -->
+            </div>
+            <label>Cantidad a agregar:</label>
+            <input type="number" id="modal-cantidad" min="1" value="1" style="text-align: center; font-weight: bold; font-size: 1.2rem;">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn" style="background: #28a745;" onclick="confirmarAgregadoItem()">Confirmar</button>
+                <button class="btn" style="background: #6c757d;" onclick="cerrarModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         
-        <!-- DATOS DEL DESPACHO -->
         <div class="card">
             <label>Obra / Proyecto:</label>
             <input type="text" id="obra" placeholder="Ej: A263 - Torre Central">
@@ -70,14 +84,12 @@
             <input type="text" id="responsable" placeholder="Tu nombre completo">
         </div>
 
-        <!-- CÁMARA ESCÁNER QR -->
         <div class="card" style="text-align: center;">
             <label style="margin-bottom: 10px;">Escanea el código QR de la pieza:</label>
             <div id="reader"></div>
             <p id="status-scan" style="font-size: 0.9rem; color: #023e8a; font-weight: bold; margin: 0;">Cámara lista para escanear...</p>
         </div>
 
-        <!-- LISTA / TABLA DE DESPACHO -->
         <div class="card">
             <h3 style="margin-top: 0; font-size: 1rem; color: #023e8a;">Elementos en la Lista de Despacho</h3>
             <div class="table-container">
@@ -85,19 +97,19 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>ID / Elemento QR</th>
-                            <th>Fecha / Hora</th>
+                            <th>Elemento / Pieza</th>
+                            <th>Obra</th>
+                            <th>Cant</th>
                             <th>Acción</th>
                         </tr>
-                    ​</thead>
+                    </thead>
                     <tbody id="lista-despacho-body">
-                        <tr><td colspan="4" style="text-align: center; color: #888;">No hay elementos escaneados aún.</td></tr>
+                        <tr><td colspan="5" style="text-align: center; color: #888;">No hay elementos escaneados aún.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- BOTONES FINALES -->
         <div class="actions">
             <button class="btn btn-pdf" onclick="imprimirPDF()">🖨️ Imprimir / PDF</button>
             <button class="btn btn-enviar" onclick="enviarDespachoServidor()">📤 Registrar en Script</button>
@@ -107,22 +119,5 @@
 
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="app.js"></script>
-    
-    <script>
-        // PWA Install prompt
-        let deferredPrompt;
-        const installBtn = document.getElementById('install-btn');
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBtn.style.display = 'block';
-            installBtn.addEventListener('click', () => {
-                installBtn.style.display = 'none';
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => { deferredPrompt = null; });
-            });
-        });
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }
-    </script>
 </body>
 </html>
