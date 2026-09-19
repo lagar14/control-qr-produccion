@@ -1,7 +1,7 @@
 let itemsDespacho = [];
 let itemTemporalScaneado = null; // Almacena temporalmente los datos de la consulta
 
-const URL_API = "https://script.google.com/macros/s/URL_DE_TU_APPS_SCRIPT_AQUI/exec";
+const URL_API = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec";
 
 // Escaneo exitoso del QR
 function onScanSuccess(decodedText, decodedResult) {
