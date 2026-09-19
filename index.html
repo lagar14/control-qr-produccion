@@ -3,27 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Producción QR</title>
+    <title>Control de Producción QR</title>
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #121212; color: #fff; margin: 0; padding: 10px; }
-        h1 { font-size: 1.3rem; margin: 15px 0; }
-        #reader { width: 100%; max-width: 480px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 2px solid #007bff; }
-        #result { margin-top: 15px; font-size: 1.1rem; font-weight: bold; color: #4CAF50; word-break: break-all; padding: 0 10px; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 0; }
+        
+        /* Barra de Menú Superior */
+        nav { background: #007bff; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        nav h2 { margin: 0; font-size: 1.2rem; }
+        #install-btn { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; display: none; cursor: pointer; }
+
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+        #reader { width: 100%; max-width: 400px; margin: 15px auto; border-radius: 10px; overflow: hidden; border: 2px solid #ddd; background: #000; }
+        #result { margin-top: 15px; font-size: 1.1rem; font-weight: bold; color: #007bff; word-break: break-all; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
+
+    <!-- MENÚ SUPERIOR -->
+    <nav>
+        <h2>📊 ProdQR</h2>
+        <button id="install-btn">Instalar App</button>
+    </nav>
+
     <div class="container">
-        <h1>Escáner de Producción</h1>
+        <h3>Escáner de Planta</h3>
         <div id="reader"></div>
-        <div id="result">Apunta al código QR...</div>
+        <div id="result">Apunta la cámara a un código QR...</div>
     </div>
 
+    <!-- Script de la librería de QR -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="app.js"></script>
+
+    <!-- Script para habilitar la instalación como PWA -->
     <script>
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+
+            installBtn.addEventListener('click', () => {
+                installBtn.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuario aceptó instalar la PWA');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
+            navigator.serviceWorker.register('manifest.json')
+                .then(() => console.log("Service Worker registrado con éxito."))
+                .catch((err) => console.log("Error en Service Worker:", err));
         }
     </script>
 </body>
