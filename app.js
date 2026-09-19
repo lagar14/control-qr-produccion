@@ -1,33 +1,25 @@
 function onScanSuccess(decodedText, decodedResult) {
     document.getElementById('result').innerText = `¡Registrado!: ${decodedText}`;
-    
-    // Opcional: vibración corta al escanear con éxito (si el celular lo soporta)
     if (navigator.vibrate) { navigator.vibrate(200); }
-    
     enviarReporteAlServidor(decodedText);
 }
 
-const html5QrCode = new Html5Qrcode("reader");
+function onScanFailure(error) {
+    // Ignoramos los errores de fotogramas donde no se ve el QR para no saturar la consola
+}
 
-// Configuración adaptada para mejor lectura en móviles
-const config = { 
-    fps: 15, 
-    qrbox: function(viewfinderWidth, viewfinderHeight) {
-        // Hace que el cuadro de lectura sea responsivo al tamaño de la pantalla
-        let minSize = Math.min(viewfinderWidth, viewfinderHeight);
-        let size = Math.floor(minSize * 0.7);
-        return { width: size, height: size };
-    }
-};
+// Inicialización directa buscando la cámara trasera principal
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    },
+    /* verbose= */ false
+);
 
-html5QrCode.start(
-    { facingMode: "environment" }, 
-    config,
-    onScanSuccess
-).catch(err => {
-    console.error("Error al iniciar la cámara:", err);
-    document.getElementById('result').innerText = "Error: No se pudo acceder a la cámara trasera.";
-});
+html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 function enviarReporteAlServidor(codigoQR) {
     const urlAPI = "https://script.google.com/macros/s/TU_URL_DE_APPS_SCRIPT/exec";
