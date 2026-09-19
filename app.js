@@ -1,45 +1,34 @@
 function onScanSuccess(decodedText, decodedResult) {
-    document.getElementById('result').innerText = `¡Registrado!: ${decodedText}`;
+    document.getElementById('result').innerText = `¡Escaneado con éxito! Cargando...`;
+    
+    // Vibración corta de confirmación
     if (navigator.vibrate) { navigator.vibrate(200); }
-    enviarReporteAlServidor(decodedText);
+    
+    // Si el QR escaneado ya es una URL completa de Apps Script, redirigimos de inmediato
+    if (decodedText.startsWith("http")) {
+        window.location.href = decodedText;
+    } else {
+        // Si el QR contiene solo el ID (ej: Id:477662369 o LOTE1), 
+        // lo unimos con la URL de despliegue de tu Google Apps Script:
+        const urlBaseAppsScript = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec";
+        window.location.href = urlBaseAppsScript + encodeURIComponent(decodedText);
+    }
 }
 
 function onScanFailure(error) {
-    // Ignoramos errores para no saturar
+    // Ignoramos errores de fotogramas vacíos para mantener la cámara fluida
 }
 
-// === CONFIGURACIÓN MÁS FLEXIBLE PARA CÁMARAS INDUSTRIALES ===
+// Inicialización del escáner con la cámara trasera
 let html5QrcodeScanner = new Html5QrcodeScanner(
     "reader",
     { 
         fps: 10, 
-        // AQUÍ ESTÁ EL CAMBIO CLAVE:
-        // Reducimos el cuadro guía a 150x150 pixeles para que sea más fácil
-        // que el QR entre sin tener que pegar el celular a la etiqueta.
-        qrbox: { width: 150, height: 150 },
-        // Mantenemos la relación de aspecto cuadrada para el video
+        qrbox: { width: 180, height: 180 },
         aspectRatio: 1.0,
-        // Permitimos que la cámara haga zoom si el dispositivo lo soporta 
-        // (esto ayuda mucho si el código está un poco lejos)
-        rememberLastUsedCamera: true,
-        showTorchButtonIfSupported: true // Agrega botón de luz si hay flash
+        rememberLastUsedCamera: true
     },
     /* verbose= */ false
 );
 
 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-
-function enviarReporteAlServidor(codigoQR) {
-    const urlAPI = "https://script.google.com/macros/s/AKfycbxtiECPzJ9iEsySqVV59OWn9kCQhmGXUDnz5exTrK8vXnWx_dYoGYtgx3CCzcXT36A4/exec";
-    
-    fetch(urlAPI, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qr: codigoQR, timestamp: new Date().toISOString() })
-    }).then(() => {
-        console.log("Dato enviado al servidor correctamente.");
-    }).catch(error => {
-        console.error("Error al enviar:", error);
-    });
-}
